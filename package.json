@@ -1,0 +1,25 @@
+{
+  "name": "gallery",
+  "version": "1.0.0",
+  "description": "this is a threeJS project for a awesome person",
+  "main": "index.js",
+  "scripts": {
+    "watch": "webpack --watch",
+    "start": "webpack serve --open",
+    "build": "webpack --config webpack.config.js"
+  },
+  "author": "Kharleann Cabrera",
+  "license": "ISC",
+  "devDependencies": {
+    "cannon-es": "^0.20.0",
+    "css-loader": "^6.7.3",
+    "html-webpack-plugin": "^5.5.0",
+    "install": "^0.13.0",
+    "npm": "^9.2.0",
+    "style-loader": "^3.3.1",
+    "three": "^0.148.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
+  }
+}
