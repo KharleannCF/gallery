@@ -27,7 +27,6 @@ module.exports = {
 		filename: "[name].bundle.js",
 		path: path.resolve(__dirname, "public"),
 		clean: true,
-		publicPath: "/public/",
 	},
 	optimization: {
 		runtimeChunk: "single",
