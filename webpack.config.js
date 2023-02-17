@@ -16,7 +16,7 @@ module.exports = {
   },
 	devtool: "inline-source-map",
 	devServer: {
-		static: "./dist",
+		static: "./public",
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
@@ -25,9 +25,9 @@ module.exports = {
 	],
 	output: {
 		filename: "[name].bundle.js",
-		path: path.resolve(__dirname, "dist"),
+		path: path.resolve(__dirname, "public"),
 		clean: true,
-		publicPath: "/dist/",
+		publicPath: "/public/",
 	},
 	optimization: {
 		runtimeChunk: "single",
