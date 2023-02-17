@@ -4,13 +4,11 @@ import CameraControls from "camera-controls";
 import * as CANNON from "cannon-es";
 
 const GROUP_SCALE = 10;
-const GROUP_DISTANCE = 5;
 const CUBE_DIMENSIONS = { x: 1, y: 1, z: 0.5 };
 const CUBE_LAYER = 2;
 const BOX_SHAPE = new CANNON.Box(
 	new CANNON.Vec3(0.5, 0.5, 0.25).scale(GROUP_SCALE)
 );
-let texturesLoaded = false;
 
 const textures = [
 	"https://pbs.twimg.com/media/Fja2aX-XkAAhGnL?format=jpg&name=large",
@@ -300,7 +298,7 @@ window.addEventListener("mousedown", () => {
 let lastTime = performance.now();
 
 let timeToNextCube = 0;
-const spawnDelay = 5;
+const spawnDelay = 3;
 const speed = 25;
 function animate() {
 	const now = performance.now();
