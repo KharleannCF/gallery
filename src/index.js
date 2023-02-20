@@ -2,13 +2,31 @@ import "./index.css";
 import * as THREE from "three";
 import CameraControls from "camera-controls";
 import * as CANNON from "cannon-es";
+import { KeyboardKeyHold } from "hold-event";
+import JoystickController from "joystick-controller";
 
+let lastTime = performance.now();
+
+const joystick = new JoystickController({ x: "15%", y: "30%", containerClass:"container" }, (data) => {
+	return data;
+});
 const GROUP_SCALE = 10;
 const CUBE_DIMENSIONS = { x: 1, y: 1, z: 0.5 };
 const CUBE_LAYER = 2;
 const BOX_SHAPE = new CANNON.Box(
 	new CANNON.Vec3(0.5, 0.5, 0.25).scale(GROUP_SCALE)
 );
+
+const KEYCODE = {
+	W: 87,
+	A: 65,
+	S: 83,
+	D: 68,
+	ARROW_LEFT: 37,
+	ARROW_UP: 38,
+	ARROW_RIGHT: 39,
+	ARROW_DOWN: 40,
+};
 
 const textures = [
 	"https://pbs.twimg.com/media/Fja2aX-XkAAhGnL?format=jpg&name=large",
@@ -55,7 +73,7 @@ function generateCube(initialPosition, scene) {
 			textureMaterial,
 		]
 	);
-	cube.scale.set(GROUP_SCALE, GROUP_SCALE, GROUP_SCALE)
+	cube.scale.set(GROUP_SCALE, GROUP_SCALE, GROUP_SCALE);
 	const rail = Math.round(Math.random()) * GROUP_SCALE;
 	const sign = Math.random() > 0.5 ? -1 : 1;
 	scene.add(cube);
@@ -162,8 +180,28 @@ const onKeyUp = (event) => {
 	}
 };
 
+const wKey = new KeyboardKeyHold(KEYCODE.W, 16.666);
+const aKey = new KeyboardKeyHold(KEYCODE.A, 16.666);
+const sKey = new KeyboardKeyHold(KEYCODE.S, 16.666);
+const dKey = new KeyboardKeyHold(KEYCODE.D, 16.666);
+aKey.addEventListener("holding", function (event) {
+	cameraControls.truck(-0.01 * event.deltaTime, 0, false);
+});
+dKey.addEventListener("holding", function (event) {
+	cameraControls.truck(0.01 * event.deltaTime, 0, false);
+});
+wKey.addEventListener("holding", function (event) {
+	cameraControls.forward(0.01 * event.deltaTime, false);
+});
+sKey.addEventListener("holding", function (event) {
+	cameraControls.forward(-0.01 * event.deltaTime, false);
+});
+
+/* 
 document.addEventListener("keydown", onKeyDown, false);
 document.addEventListener("keyup", onKeyUp, false);
+ */
+
 const groupLeft = new THREE.Group();
 const groupRight = new THREE.Group();
 const bottomTableG = new THREE.BoxGeometry(5, 1, 4.5);
@@ -220,7 +258,6 @@ const groupRightBody = new CANNON.Body({
 	shape: new CANNON.Box(new CANNON.Vec3(2.5, 3.75, 2.5).scale(GROUP_SCALE)), // Set shape to match groupRight size
 });
 
-
 groupLeftBody.position.set(-100, 0, 0);
 groupRightBody.position.set(100, 0, 0);
 groupLeftBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI);
@@ -251,7 +288,7 @@ cameraControls.update();
 window.addEventListener("mousedown", () => {
 	const ballRadius = 0.5;
 	const ballGeometry = new THREE.SphereGeometry(ballRadius, 16, 16);
-	const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xAAAAAA });
+	const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
 	const ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
 	ballMesh.position.copy(camera.position);
 	scene.add(ballMesh);
@@ -289,17 +326,28 @@ window.addEventListener("mousedown", () => {
 		// check if the collided body is a ball
 		if (cubes.includes(cube)) {
 			// set the ball's velocity to zero so it falls under gravity
-			ball.velocity.set(ball.velocity.x/-10, ball.velocity.y/-10, ball.velocity.z/-10);
+			ball.velocity.set(
+				ball.velocity.x / -10,
+				ball.velocity.y / -10,
+				ball.velocity.z / -10
+			);
 			ball.angularVelocity.set(0, 0, 0);
 		}
 	});
 });
 
-let lastTime = performance.now();
-
 let timeToNextCube = 0;
 const spawnDelay = 3;
 const speed = 25;
+
+function onWindowResize() {
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+  
+  window.addEventListener("resize", onWindowResize);
+
 function animate() {
 	const now = performance.now();
 	const delta = (now - lastTime) / 1000;
@@ -336,14 +384,18 @@ function animate() {
 			elem.cube.boxBody.position.copy(elem.cube.cube.position);
 		}
 	}
-	direction.z = Number(moveForward) - Number(moveBackward);
-	direction.x = Number(moveRight) - Number(moveLeft);
-
-	if (moveForward || moveBackward) {
-		cameraControls.forward(10 * delta * direction.z, true);
+	
+	if (joystick.x < -50) {
+		cameraControls.truck(-0.01 * delta*1000, 0, false);
 	}
-	if (moveLeft || moveRight) {
-		cameraControls.truck(10 * delta * direction.x, 0, true);
+	if (joystick.x > 50) {
+		cameraControls.truck(0.01 * delta*1000, 0, false);
+	}
+	if (joystick.y > 50) {
+		cameraControls.forward(0.01 * delta*1000, false);
+	}
+	if (joystick.y < -50) {
+		cameraControls.forward(-0.01 * delta*1000, false);
 	}
 
 	if (cameraControls.update(delta)) {
