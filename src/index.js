@@ -32,9 +32,12 @@ const textures = [
 	"https://pbs.twimg.com/media/Fja2aX-XkAAhGnL?format=jpg&name=large",
 	"https://pbs.twimg.com/media/FPh6uYoXIAQmsTF?format=jpg&name=large",
 	"https://pbs.twimg.com/media/FKJ9uL0X0AcD8Zy?format=jpg&name=900x900",
-	"https://scontent-iad3-2.xx.fbcdn.net/v/t39.30808-6/322953892_1368609863675764_8550388422795312537_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=0debeb&_nc_ohc=j8kOssq5KVgAX-SZNdq&_nc_ht=scontent-iad3-2.xx&oh=00_AfCs36vXETi3lNljV1W1ifgYnKkxrkAD1zDpPdrjNgtqGg&oe=63F36B03",
-	"https://scontent-iad3-2.xx.fbcdn.net/v/t39.30808-6/314498925_188335383748634_1438016474951599445_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=8bfeb9&_nc_ohc=cy_p2ujckJQAX_MGvjz&_nc_ht=scontent-iad3-2.xx&oh=00_AfDRYUYr2p5bR41qgjZ_2yIiU6wcj1cVNqlgUyy8Sxec-g&oe=63F3ABA3",
-	"https://scontent-iad3-2.xx.fbcdn.net/v/t39.30808-6/311366279_183454410903398_226244603113068831_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=8bfeb9&_nc_ohc=pG9y_1F661UAX-oviFp&_nc_ht=scontent-iad3-2.xx&oh=00_AfAu4B1OWJ4bn5RUnqj7h9ArOekWBOMX5lTJF4nDP58j8A&oe=63F4A328",
+	"https://pbs.twimg.com/media/FNYntH0XoAA6mNv?format=jpg&name=large",
+	"https://pbs.twimg.com/media/FMf9zC6XoAUvRkt?format=jpg&name=large",
+	"https://pbs.twimg.com/media/FL6l-YBWQAIAaLJ?format=jpg&name=large",
+	"https://pbs.twimg.com/media/FKeEHQ3XoAQfPav?format=jpg&name=large",
+
+
 	// ... add more texture paths here
 ];
 
