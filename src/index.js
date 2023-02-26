@@ -4,29 +4,12 @@ import CameraControls from "camera-controls";
 import * as CANNON from "cannon-es";
 import { KeyboardKeyHold } from "hold-event";
 import JoystickController from "joystick-controller";
+import WorldMap from "./classes/Map";
+import Player from "./classes/Player";
+import Cube from "./classes/Cube";
+import Ball from "./classes/Ball";
 
 let lastTime = performance.now();
-
-const joystick = new JoystickController({ x: "15%", y: "30%", containerClass:"container" }, (data) => {
-	return data;
-});
-const GROUP_SCALE = 10;
-const CUBE_DIMENSIONS = { x: 1, y: 1, z: 0.5 };
-const CUBE_LAYER = 2;
-const BOX_SHAPE = new CANNON.Box(
-	new CANNON.Vec3(0.5, 0.5, 0.25).scale(GROUP_SCALE)
-);
-
-const KEYCODE = {
-	W: 87,
-	A: 65,
-	S: 83,
-	D: 68,
-	ARROW_LEFT: 37,
-	ARROW_UP: 38,
-	ARROW_RIGHT: 39,
-	ARROW_DOWN: 40,
-};
 
 const textures = [
 	"https://pbs.twimg.com/media/Fja2aX-XkAAhGnL?format=jpg&name=large",
@@ -37,9 +20,15 @@ const textures = [
 	"https://pbs.twimg.com/media/FL6l-YBWQAIAaLJ?format=jpg&name=large",
 	"https://pbs.twimg.com/media/FKeEHQ3XoAQfPav?format=jpg&name=large",
 
-
 	// ... add more texture paths here
 ];
+
+const GROUP_SCALE = 10;
+const CUBE_DIMENSIONS = { x: 1, y: 1, z: 0.5 };
+const CUBE_LAYER = 2;
+const BOX_SHAPE = new CANNON.Box(
+	new CANNON.Vec3(0.5, 0.5, 0.25).scale(GROUP_SCALE)
+);
 
 const textureLoader = new THREE.TextureLoader();
 const texturePromises = textures.map((texturePath) =>
@@ -61,37 +50,31 @@ function generateCube(initialPosition, scene) {
 	const textureMaterial = new THREE.MeshBasicMaterial({
 		map: texturesMaterial[textureIndex],
 	});
-	const cube = new THREE.Mesh(
-		new THREE.BoxGeometry(
-			CUBE_DIMENSIONS.x,
-			CUBE_DIMENSIONS.y,
-			CUBE_DIMENSIONS.z
-		),
-		[
-			materials[materialIndex],
-			materials[materialIndex],
-			materials[materialIndex],
-			materials[materialIndex],
-			textureMaterial,
-			textureMaterial,
-		]
+	const geometry = new THREE.BoxGeometry(
+		CUBE_DIMENSIONS.x,
+		CUBE_DIMENSIONS.y,
+		CUBE_DIMENSIONS.z
 	);
-	cube.scale.set(GROUP_SCALE, GROUP_SCALE, GROUP_SCALE);
+	const materialsArr = [
+		materials[materialIndex],
+		materials[materialIndex],
+		materials[materialIndex],
+		materials[materialIndex],
+		textureMaterial,
+		textureMaterial,
+	];
+	const cube = new Cube(geometry, materialsArr, BOX_SHAPE, 0, 25);
 	const rail = Math.round(Math.random()) * GROUP_SCALE;
 	const sign = Math.random() > 0.5 ? -1 : 1;
-	scene.add(cube);
-	cube.position.set(
+	cube.setPosition(
 		initialPosition,
 		GROUP_SCALE,
 		0.5 * GROUP_SCALE + rail * sign
 	);
-	cube.layers.set(CUBE_LAYER);
-	const boxBody = new CANNON.Body({ mass: 0 });
-	boxBody.addShape(BOX_SHAPE);
-	boxBody.position.copy(cube.position);
-	world.addBody(boxBody);
-	cubes.push(boxBody);
-	return { cube, boxBody };
+	cube.getMesh().layers.set(CUBE_LAYER);
+	cube.getMesh().scale.set(GROUP_SCALE, GROUP_SCALE, GROUP_SCALE);
+	map.addElement(cube.getBody(), cube.getMesh());
+	return cube;
 }
 function detectCollisionCubes(firstObject, secondObject) {
 	const firstBB = new THREE.Box3().setFromObject(firstObject);
@@ -99,27 +82,6 @@ function detectCollisionCubes(firstObject, secondObject) {
 	return firstBB.intersectsBox(secondBB);
 }
 
-CameraControls.install({ THREE: THREE });
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-	60,
-	window.innerWidth / window.innerHeight,
-	0.1,
-	1000
-);
-camera.layers.enable(2);
-
-const world = new CANNON.World();
-world.gravity.set(0, -9.82, 0);
-world.broadphase = new CANNON.NaiveBroadphase();
-const balls = [];
-const ballMeshes = [];
-const cubes = [];
-const direction = new THREE.Vector3(0, 0, 0);
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
 const materials = [
 	new THREE.MeshBasicMaterial({ color: 0x005555 }),
 	new THREE.MeshBasicMaterial({ color: 0x550055 }),
@@ -127,83 +89,36 @@ const materials = [
 	new THREE.MeshBasicMaterial({ color: 0x883355 }),
 ];
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const toAnimate = [];
-camera.position.set(new THREE.Vector3(0, 2.5, -5));
-
-CameraControls.install({ THREE: THREE });
-const cameraControls = new CameraControls(camera, renderer.domElement);
-cameraControls.setLookAt(0, 1.9, -20, 0, 1.9, -19.99, false);
-cameraControls.maxDistance = 0.1;
-cameraControls.minDistance = 0;
-cameraControls.truckSpeed = 2.0;
-
-const onKeyDown = (event) => {
-	switch (event.keyCode) {
-		case 38: // up
-		case 87: // w
-			moveForward = true;
-			break;
-		case 37: // left
-		case 65: // a
-			moveLeft = true;
-			break;
-		case 40: // down
-		case 83: // s
-			moveBackward = true;
-			break;
-		case 39: // right
-		case 68: // d
-			moveRight = true;
-			break;
-	}
+const KEYCODE = {
+	W: 87,
+	A: 65,
+	S: 83,
+	D: 68,
+	ARROW_LEFT: 37,
+	ARROW_UP: 38,
+	ARROW_RIGHT: 39,
+	ARROW_DOWN: 40,
 };
 
-const onKeyUp = (event) => {
-	switch (event.keyCode) {
-		case 38: // up
-		case 87: // w
-			moveForward = false;
-			break;
-		case 37: // left
-		case 65: // a
-			moveLeft = false;
-			break;
-		case 40: // down
-		case 83: // s
-			moveBackward = false;
-			break;
-		case 39: // right
-		case 68: // d
-			moveRight = false;
-			break;
-	}
-};
+const map = new WorldMap(document);
+const player = new Player(map);
 
 const wKey = new KeyboardKeyHold(KEYCODE.W, 16.666);
 const aKey = new KeyboardKeyHold(KEYCODE.A, 16.666);
 const sKey = new KeyboardKeyHold(KEYCODE.S, 16.666);
 const dKey = new KeyboardKeyHold(KEYCODE.D, 16.666);
 aKey.addEventListener("holding", function (event) {
-	cameraControls.truck(-0.01 * event.deltaTime, 0, false);
+	player.getCameraControls().truck(-0.01 * event.deltaTime, 0, false);
 });
 dKey.addEventListener("holding", function (event) {
-	cameraControls.truck(0.01 * event.deltaTime, 0, false);
+	player.getCameraControls().truck(0.01 * event.deltaTime, 0, false);
 });
 wKey.addEventListener("holding", function (event) {
-	cameraControls.forward(0.01 * event.deltaTime, false);
+	player.getCameraControls().forward(0.01 * event.deltaTime, false);
 });
 sKey.addEventListener("holding", function (event) {
-	cameraControls.forward(-0.01 * event.deltaTime, false);
+	player.getCameraControls().forward(-0.01 * event.deltaTime, false);
 });
-
-/* 
-document.addEventListener("keydown", onKeyDown, false);
-document.addEventListener("keyup", onKeyUp, false);
- */
 
 const groupLeft = new THREE.Group();
 const groupRight = new THREE.Group();
@@ -245,9 +160,6 @@ groupRight.add(topBox.clone());
 groupRight.add(sideBox.clone());
 groupRight.add(backBox.clone());
 
-scene.add(groupLeft);
-scene.add(groupRight);
-
 groupLeft.rotation.set(0, Math.PI, 0);
 groupLeft.scale.set(GROUP_SCALE, GROUP_SCALE, GROUP_SCALE);
 groupRight.scale.set(GROUP_SCALE, GROUP_SCALE, GROUP_SCALE);
@@ -265,8 +177,8 @@ groupLeftBody.position.set(-100, 0, 0);
 groupRightBody.position.set(100, 0, 0);
 groupLeftBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI);
 
-world.addBody(groupLeftBody);
-world.addBody(groupRightBody);
+map.addElement(groupLeftBody, groupLeft);
+map.addElement(groupRightBody, groupRight);
 
 groupLeft.position.copy(groupLeftBody.position);
 groupLeft.quaternion.copy(groupLeftBody.quaternion);
@@ -277,57 +189,36 @@ const floorGeometry = new THREE.PlaneBufferGeometry(300, 300, 100, 100);
 floorGeometry.rotateX(-Math.PI / 2);
 const floor = new THREE.Mesh(floorGeometry, materialGrey);
 floor.position.set(0, -0.5, 0);
-scene.add(floor);
 
 const floorShape = new CANNON.Plane();
 const floorBody = new CANNON.Body({ mass: 0 });
 floorBody.addShape(floorShape);
 floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
 floorBody.position.set(0, -0.5, 0);
-world.addBody(floorBody);
 
-cameraControls.update();
+map.addElement(floorBody, floor);
+player.getCameraControls().update();
 
 window.addEventListener("mousedown", () => {
-	const ballRadius = 0.5;
-	const ballGeometry = new THREE.SphereGeometry(ballRadius, 16, 16);
-	const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
-	const ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
-	ballMesh.position.copy(camera.position);
-	scene.add(ballMesh);
-
-	const cameraDirection = new THREE.Vector3();
-	camera.getWorldDirection(cameraDirection);
-
-	const ballShape = new CANNON.Sphere(ballRadius);
-	const ballBody = new CANNON.Body({ mass: 1 });
-	ballBody.addShape(ballShape);
-	ballBody.position.copy(camera.position);
-	const ballSpeed = 75;
-	const ballVelocity = cameraDirection.multiplyScalar(ballSpeed);
-	ballBody.velocity.copy(ballVelocity);
-	world.addBody(ballBody);
-
-	balls.push(ballBody);
-	ballMeshes.push(ballMesh);
-
-	if (balls.length > 10) {
-		world.removeBody(balls.shift());
-		scene.remove(ballMeshes.shift());
-	}
-
-	// check for collisions with boxes
-	const contactMaterial = new CANNON.ContactMaterial(ballMaterial, {
+	const ball = player.shoot();
+	map.addElement(ball.getBody(), ball.getMesh());
+	map.balls.push(ball);
+	const contactMaterial = new CANNON.ContactMaterial(ball.getMaterial(), {
 		friction: 0.3,
 		restitution: 0.7,
 	});
-	world.addContactMaterial(contactMaterial);
+	map.getWorldBody().addContactMaterial(contactMaterial);
+	if (map.balls.length > 10) {
+		const firstBall = map.balls.shift();
+		map.getWorldBody().removeBody(firstBall.getBody());
+		map.getScene().remove(firstBall.getMesh());
+	}
 
-	ballBody.addEventListener("collide", (event) => {
+	ball.getBody().addEventListener("collide", (event) => {
 		const ball = event.contact.bi;
 		const cube = event.contact.bj;
 		// check if the collided body is a ball
-		if (cubes.includes(cube)) {
+		if (map.cubes.includes(cube)) {
 			// set the ball's velocity to zero so it falls under gravity
 			ball.velocity.set(
 				ball.velocity.x / -10,
@@ -344,87 +235,58 @@ const spawnDelay = 3;
 const speed = 25;
 
 function onWindowResize() {
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
-	renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-  
-  window.addEventListener("resize", onWindowResize);
+	player.getCamera().aspect = window.innerWidth / window.innerHeight;
+	player.getCamera().updateProjectionMatrix();
+	map.getRenderer().setSize(window.innerWidth, window.innerHeight);
+}
+
+window.addEventListener("resize", onWindowResize);
 
 function animate() {
 	const now = performance.now();
 	const delta = (now - lastTime) / 1000;
 
-	for (let i = 0; i < balls.length; i++) {
-		ballMeshes[i].position.copy(balls[i].position);
-		ballMeshes[i].quaternion.copy(balls[i].quaternion);
-	}
+	map.getWorldBody().step(1 / 60, delta);
 
-	world.step(1 / 60, delta);
-
-	for (let i = toAnimate.length - 1; i >= 0; i--) {
-		const elem = toAnimate[i];
+	for (let i = map.cubes.length - 1; i >= 0; i--) {
+		const elem = map.cubes[i];
 		const collisionDetected =
 			elem.speed > 0 &&
 			detectCollisionCubes(
-				elem.cube.cube,
+				elem.getMesh(),
 				groupRight.getObjectByName("collision")
 			);
 
 		if (
 			collisionDetected ||
 			detectCollisionCubes(
-				elem.cube.cube,
+				elem.getMesh(),
 				groupLeft.getObjectByName("collision")
 			)
 		) {
-			scene.remove(elem.cube.cube);
-			world.removeBody(elem.cube.boxBody);
-			cubes.splice(cubes.indexOf(elem.cube.boxBody), 1);
-			toAnimate.splice(i, 1);
+			map.getScene().remove(elem.getMesh());
+			map.getWorldBody().removeBody(elem.getBody());
+			map.cubes.splice(i, 1);
 		} else {
-			elem.cube.cube.position.x += elem.speed * delta;
-			elem.cube.boxBody.position.copy(elem.cube.cube.position);
+			elem.move(delta);
 		}
 	}
-	
-	if (joystick.x < -50) {
-		cameraControls.truck(-0.01 * delta*1000, 0, false);
-	}
-	if (joystick.x > 50) {
-		cameraControls.truck(0.01 * delta*1000, 0, false);
-	}
-	if (joystick.y > 50) {
-		cameraControls.forward(0.01 * delta*1000, false);
-	}
-	if (joystick.y < -50) {
-		cameraControls.forward(-0.01 * delta*1000, false);
-	}
-
-	if (cameraControls.update(delta)) {
-		camera.updateProjectionMatrix();
-		renderer.render(scene, camera);
-	}
-
-	lastTime = now;
 
 	timeToNextCube -= delta;
 	if (timeToNextCube <= 0 && texturesMaterial.length > 0) {
 		if (Math.random() <= 0.5) {
-			toAnimate.push({
-				cube: generateCube(-90, scene),
-				speed: speed,
-			});
+			map.cubes.push(generateCube(-90, map.getScene()));
 		} else {
-			toAnimate.push({
-				cube: generateCube(90, scene),
-				speed: -speed,
-			});
+			map.cubes.push(generateCube(90, map.getScene()));
 		}
 		timeToNextCube = spawnDelay;
 	}
 
+	player.moveCamera(delta, map.getScene());
+	map.ballsMovement();
+	lastTime = now;
+
 	requestAnimationFrame(animate);
-	renderer.render(scene, camera);
+	map.getRenderer().render(map.getScene(), player.getCamera());
 }
 animate();
