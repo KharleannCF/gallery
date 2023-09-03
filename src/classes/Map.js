@@ -4,7 +4,7 @@ import * as CANNON from "cannon-es";
 class WorldMap {
 	constructor(document) {
 		this.worldBody = new CANNON.World();
-		this.worldBody.gravity.set(0, -9.82, 0);
+		this.worldBody.gravity.set(0, -9.81, 0);
 		this.worldBody.broadphase = new CANNON.NaiveBroadphase();
 		this.renderer = new THREE.WebGLRenderer();
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -13,6 +13,7 @@ class WorldMap {
 		this.cubes = [];
 		this.balls = [];
 		this.toAnimate = [];
+		this.buttons = [];
 	}
 
 	getWorldBody() {
@@ -27,14 +28,33 @@ class WorldMap {
 		return this.scene;
 	}
 
-	addElement(elementBody, elementMesh) {
+	getElementByName(name){
+		return this.scene.getObjectByName(name);
+	}
+
+	addLight(light) {
+		this.scene.add(light);
+	}
+
+	addElement(elementBody, elementMesh, name="") {
 		this.worldBody.addBody(elementBody);
 		this.scene.add(elementMesh);
 	}
 
+	addElementObject(element, name=""){
+		this.worldBody.addBody(element.body);
+		element.mesh.name = name;
+		this.scene.add(element.mesh);
+	}
+
+	removeElement(elementBody, elementMesh) {
+		this.worldBody.removeBody(elementBody);
+		this.scene.remove(elementMesh);
+	}
+
 	ballsMovement() {
 		for (let i = 0; i < this.balls.length; i++) {
-			this.balls[i].move()
+			this.balls[i].move(this)
 		}
 	}
 }

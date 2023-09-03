@@ -4,26 +4,31 @@ import * as CANNON from "cannon-es";
 
 
 class Cube {
-    constructor(geometry, materials, cubeBodyShape, mass=0, speed=0) {
+    constructor(geometry, materials, cubeBodyShape, mass=0, speed=0, position= new THREE.Vector3(0, 0, 0)) {
         this.cubeMesh = new THREE.Mesh(
            geometry,
             [
                 ...materials,
             ]
         );
-        this.cubeBody = new CANNON.Body({ mass });
+        this.cubeBody = new CANNON.Body({ mass, velocity: new CANNON.Vec3(speed, 0, 0), type: CANNON.Body.KINEMATIC });
         this.cubeBody.addShape(cubeBodyShape);
-        this.cubeBody.position.copy(this.cubeMesh.position)
-        this.speed = speed;
+        this.cubeMesh.position.copy(position);
+	    this.cubeBody.position.copy(this.cubeMesh.position);
+        this.speed = speed;        
     }
 
     setPosition(x, y, z) {
-        this.cubeMesh.position.set(x, y, z);
-        this.cubeBody.position.copy(this.cubeMesh.position);
+        this.cubeBody.position = new CANNON.Vec3(x, y, z);
+        this.cubeMesh.position.copy(this.cubeBody.position);
     }
 
     getPosition() {
         return this.cubeMesh.position;
+    }
+
+    getPositionBody() {
+        return this.cubeBody.position;
     }
 
     getBody() {
@@ -42,9 +47,9 @@ class Cube {
         return this.speed;
     }
 
-    move(delta) {
-        this.cubeMesh.position.x += this.speed * delta;
-        this.cubeBody.position.copy(this.cubeMesh.position);
+    move() {
+        this.cubeMesh.position.copy(this.cubeBody.position);
+		this.cubeMesh.quaternion.copy(this.cubeBody.quaternion);
     }
 
     detectCollision(object) {
@@ -53,7 +58,8 @@ class Cube {
         return cubeBoundingBox.intersectsBox(secondBoundingBox);
     }
 
-    
+  
+
 }
 
 export default Cube;

@@ -7,12 +7,14 @@ class Ball {
     constructor(geometry, material, ballBodyShape, mass=0, speed=0, position, direction) {
         this.ballMesh = new THREE.Mesh(geometry, material);
         this.material = material;
-	    this.ballBody = new CANNON.Body({ mass });
+	    this.ballBody = new CANNON.Body({ mass, linearDamping:0.5 });
         this.ballBody.addShape(ballBodyShape);
         this.ballMesh.position.copy(position);
 	    this.ballBody.position.copy(this.ballMesh.position);
         this.speed = speed;
         this.ballBody.velocity.copy(direction.multiplyScalar(this.speed));
+        this.liveTime = 0
+
     }
 
     addCollitionListener() {
@@ -30,9 +32,11 @@ class Ball {
         return this.ballBody;
     }
 
-    move() {
+    move(map) {
+        if (this.liveTime > 5) return map.removeElement(this.getBody(), this.getMesh())
         this.ballMesh.position.copy(this.ballBody.position);
 		this.ballMesh.quaternion.copy(this.ballBody.quaternion);
+        this.liveTime += 0.01
     }
     
     getSpeed() {

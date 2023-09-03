@@ -25,6 +25,7 @@
   "dependencies": {
     "camera-controls": "^2.2.1",
     "hold-event": "^0.2.0",
-    "joystick-controller": "^1.0.8"
+    "joystick-controller": "^1.0.8",
+    "three-to-cannon": "^4.3.0"
   }
 }
